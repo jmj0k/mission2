@@ -116,9 +116,10 @@ public class AccountService {
         }
     }
 
+    @Transactional
     public List<AccountDto> getAccountsByUserId(Long userId) {
         AccountUser accountUser = accountUserRepository.findById(userId)
-                .orElseThrow(() -> new AccountException(ErrorCode.ACCOUNT_NOT_FOUND));
+                .orElseThrow(() -> new AccountException(ErrorCode.USER_NOT_FOUND));
 
         List<Account> accounts = accountRepository
                 .findByAccountUser(accountUser);
