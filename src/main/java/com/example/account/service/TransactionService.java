@@ -50,17 +50,8 @@ public class TransactionService {
         
         account.useBalance(amount);
 
-        return TransactionDto.fromEntiry(transactionRepository.save(
-                Transaction.builder()
-                        .transactionType(USE)
-                        .transactionResultType(TransactionResultType.S)
-                        .account(account)
-                        .amount(amount)
-                        .balanceSnapshot(account.getBalance())
-                        .transactionId(UUID.randomUUID().toString().replace("-",""))
-                        .transactedAt(LocalDateTime.now())
-                        .build()
-        ));
+        return TransactionDto.fromEntity(
+                saveAndGetTransaction(TransactionResultType.S, amount, account));
     }
 
     private void validateUseBalance(AccountUser user, Account account, Long amount) {
@@ -80,6 +71,20 @@ public class TransactionService {
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountException(ErrorCode.ACCOUNT_NOT_FOUND));
 
+        saveAndGetTransaction(TransactionResultType.F, amount, account);
+    }
 
+    private Transaction saveAndGetTransaction(TransactionResultType transactionResultType, Long amount, Account account) {
+        return transactionRepository.save(
+                Transaction.builder()
+                        .transactionType(USE)
+                        .transactionResultType(transactionResultType)
+                        .account(account)
+                        .amount(amount)
+                        .balanceSnapshot(account.getBalance())
+                        .transactionId(UUID.randomUUID().toString().replace("-",""))
+                        .transactedAt(LocalDateTime.now())
+                        .build()
+        );
     }
 }

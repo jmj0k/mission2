@@ -1,6 +1,5 @@
 package com.example.account.controller;
 
-import com.example.account.dto.TransactionDto;
 import com.example.account.dto.UseBalance;
 import com.example.account.exception.AccountException;
 import com.example.account.service.TransactionService;
@@ -11,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.security.AccessControlException;
+
 
 /**
  *  잔액 관련 컨트롤러
@@ -24,13 +23,13 @@ import java.security.AccessControlException;
 @RestController
 public class TransactionController {
     private final TransactionService transactionService;
-    @PostMapping("/transction/use")
+    @PostMapping("/transaction/use")
     public UseBalance.Response useBalance(
             @Valid @RequestBody UseBalance.Request request
     ) {
 
         try {
-            UseBalance.Response.from(transactionService.useBalance(request.getUserId(),
+            return UseBalance.Response.from(transactionService.useBalance(request.getUserId(),
                     request.getAccountNumber(), request.getAmount())
             );
         } catch (AccountException e) {
@@ -41,6 +40,7 @@ public class TransactionController {
                     request.getAmount()
             );
 
+            throw e;
         }
     }
 }
