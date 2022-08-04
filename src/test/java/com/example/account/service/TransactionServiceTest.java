@@ -281,9 +281,6 @@ class TransactionServiceTest {
     @DisplayName("해당 계좌 없음, 잔액 사용 취소 실패")
     void cancelTransaction_AccountNotFound() {
         //given
-        AccountUser user = AccountUser.builder()
-                .id(12L)
-                .name("dd").build();
         given(transactionRepository.findByTransactionId(anyString()))
                 .willReturn(Optional.of(Transaction.builder().build()));
 
@@ -421,5 +418,51 @@ class TransactionServiceTest {
                 () -> transactionService.cancelBalance("transactionId", "1000000000", 200L));
         //then
         assertEquals(ErrorCode.TOO_OLD_ORDER_TO_CANCEL, exception.getErrorCode());
+    }
+
+    @Test
+    void successQueryTransaction() {
+        //given
+        AccountUser user = AccountUser.builder()
+                .id(12L)
+                .name("dd").build();
+        Account account = Account.builder()
+                .id(1L)
+                .accountUser(user)
+                .accountStatus(AccountStatus.IN_USE)
+                .balance(10000L)
+                .accountNumber("1000000012").build();
+        Transaction transaction = Transaction.builder()
+                .account(account)
+                .transactionType(TransactionType.USE)
+                .transactionResultType(TransactionResultType.S)
+                .transactionId("transactionId")
+                .transactedAt(LocalDateTime.now().minusYears(1).minusDays(1))
+                .amount(200L)
+                .balanceSnapshot(9000L)
+                .build();
+
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(transaction));
+
+        //when
+        TransactionDto transactionDto = transactionService.queryTransaction("trxId");
+        assertEquals(TransactionType.USE, transactionDto.getTransactionType());
+        assertEquals(TransactionResultType.S, transactionDto.getTransactionResultType());
+        assertEquals(200L, transactionDto.getAmount());
+        assertEquals("transactionId", transactionDto.getTransactionId());
+    }
+
+    @Test
+    @DisplayName("원 거래 없음, 거래 조회 실패")
+    void queryTransaction_TransactionNotFound() {
+        //given
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.empty());
+        //when
+        AccountException exception = assertThrows(AccountException.class,
+                () -> transactionService.queryTransaction("transactionId"));
+        //then
+        assertEquals(ErrorCode.TRANSACTION_NOT_FOUND, exception.getErrorCode());
     }
 }
