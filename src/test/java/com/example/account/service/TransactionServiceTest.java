@@ -225,4 +225,55 @@ class TransactionServiceTest {
         assertEquals(10000L, captor.getValue().getBalanceSnapshot());
         assertEquals(TransactionResultType.F, captor.getValue().getTransactionResultType());
     }
+
+    @Test
+    void successCancelBalance() {
+        //given
+        AccountUser user = AccountUser.builder()
+                .id(12L)
+                .name("dd").build();
+        Account account = Account.builder()
+                .accountUser(user)
+                .accountStatus(AccountStatus.IN_USE)
+                .balance(10000L)
+                .accountNumber("1000000012").build();
+        Transaction transaction = Transaction.builder()
+                .account(account)
+                .transactionType(TransactionType.USE)
+                .transactionResultType(TransactionResultType.S)
+                .transactionId("transactionId")
+                .transactedAt(LocalDateTime.now())
+                .amount(200L)
+                .balanceSnapshot(9000L)
+                .build();
+
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(transaction));
+        given(accountRepository.findByAccountNumber(anyString()))
+                .willReturn(Optional.of(account));
+        given(transactionRepository.save(any()))
+                .willReturn(Transaction
+                        .builder()
+                        .account(account)
+                        .transactionType(TransactionType.CANCEL)
+                        .transactionResultType(TransactionResultType.S)
+                        .transactionId("transactionIdForCancel")
+                        .transactedAt(LocalDateTime.now())
+                        .amount(200L)
+                        .balanceSnapshot(10000L)
+                        .build());
+
+        ArgumentCaptor<Transaction> captor = ArgumentCaptor.forClass(Transaction.class);
+        //when
+        TransactionDto transactionDto = transactionService.cancelBalance("transactionIdForCancel",
+                "1000000000", 200L);
+        //then
+        verify(transactionRepository, times(1)).save(captor.capture());
+        assertEquals(200L, captor.getValue().getAmount());
+        assertEquals(10000L + 200L, captor.getValue().getBalanceSnapshot());
+        assertEquals(TransactionResultType.S, transactionDto.getTransactionResultType());
+        assertEquals(TransactionType.CANCEL, transactionDto.getTransactionType());
+        assertEquals(10000L, transactionDto.getBalanceSnapshot());
+        assertEquals(200L, transactionDto.getAmount());
+    }
 }
