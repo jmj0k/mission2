@@ -49,8 +49,7 @@ public class AccountService {
          * accountuser가 없으면 throw,
          * 있으면 accountUser에 값을 넘겨줌
          */
-        AccountUser accountUser = accountUserRepository.findById(userId)
-                .orElseThrow(() -> new AccountException(ErrorCode.USER_NOT_FOUND));
+        AccountUser accountUser = getAccountUser(userId);
 
         // 유저의 계좌 수 체크
         validateCreateAccount(accountUser);
@@ -82,8 +81,7 @@ public class AccountService {
     @Transactional
     public AccountDto deleteAccount(Long userId, String accountNumber) {
         // 유저를 찾을 수 없을 경우
-        AccountUser accountUser = accountUserRepository.findById(userId)
-                .orElseThrow(() -> new AccountException(ErrorCode.USER_NOT_FOUND));
+        AccountUser accountUser = getAccountUser(userId);
         // 계좌를 찾을 수 없을 경우
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountException(ErrorCode.ACCOUNT_NOT_FOUND));
@@ -118,14 +116,17 @@ public class AccountService {
 
     @Transactional
     public List<AccountDto> getAccountsByUserId(Long userId) {
-        AccountUser accountUser = accountUserRepository.findById(userId)
-                .orElseThrow(() -> new AccountException(ErrorCode.USER_NOT_FOUND));
-
+        AccountUser accountUser = getAccountUser(userId);
         List<Account> accounts = accountRepository
                 .findByAccountUser(accountUser);
 
         return accounts.stream()
                 .map(AccountDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    private AccountUser getAccountUser(Long userId) {
+        return accountUserRepository.findById(userId)
+                .orElseThrow(() -> new AccountException(ErrorCode.USER_NOT_FOUND));
     }
 }
