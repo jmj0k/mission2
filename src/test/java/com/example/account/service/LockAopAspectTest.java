@@ -57,7 +57,6 @@ class LockAopAspectTest {
 
         assertThrows(AccountException.class, () ->
                 lockAopAspect.aroundMethod(proceedingJoinPoint, request));
-        lockAopAspect.aroundMethod(proceedingJoinPoint, request);
 
         verify(lockService, times(1)).lock(lockAruArgumentCaptor.capture());
         verify(lockService, times(1)).unlock(unlockAruArgumentCaptor.capture());
